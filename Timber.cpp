@@ -2,8 +2,14 @@
 #include <sstream>
 #include <SFML/Graphics.hpp>
 
-
 using namespace sf;
+
+// Function Declaration
+void updateBranches(int seed);
+const int NUM_BRANCHES = 6;
+Sprite branches[NUM_BRANCHES];
+enum class side {LEFT, RIGHT, NONE};
+side branchPositions[NUM_BRANCHES];
 
 int main()
 {
@@ -111,10 +117,72 @@ int main()
     messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
     scoreText.setPosition(20, 20);
 
+    // Set up branches
+    Texture textureBranch;
+    textureBranch.loadFromFile("graphics/branch.png");
+    // Set texture for each branch
+    for (int i = 0; i < NUM_BRANCHES; i++) {
+        branches[i].setTexture(textureBranch);
+        branches[i].setPosition(-2000, -2000);
+        branches[i].setOrigin(220, 20);
+    }
+
+    // Player Sprite 
+    Texture texturePlayer;
+    texturePlayer.loadFromFile("graphics/player.png");
+    Sprite spritePlayer;
+    spritePlayer.setTexture(texturePlayer);
+    spritePlayer.setPosition(580, 720);
+    side playerSide = side::LEFT;
+
+    // Gravestone Sprite
+    Texture textureRIP;
+    textureRIP.loadFromFile("graphics/rip.png");
+    Sprite spriteRIP;
+    spriteRIP.setTexture(textureRIP);
+    spriteRIP.setPosition(600, 860);
+
+    // Axe Sprite
+    Texture textureAxe;
+    textureAxe.loadFromFile("graphics/axe.png");
+    Sprite spriteAxe;
+    spriteAxe.setTexture(textureAxe);
+    spriteAxe.setPosition(700, 830);
+
+    // Lineup Axe with Tree
+    const float AXE_POSITION_LEFT = 700;
+    const float AXE_POSITION_RIGHT = 1075;
+
+    // Chopped Piece Sprite
+    Texture textureLog;
+    textureLog.loadFromFile("graphics/log.png");
+    Sprite spriteLog;
+    spriteLog.setTexture(textureLog);
+    spriteLog.setPosition(810, 720);
+
+    // Log variables
+    bool logActive = false;
+    float logSpeedX = 1000;
+    float logSpeedY = -1500;
+
+    // control player input
+    bool acceptInput = false;
+
     while (window.isOpen()) {
         /*
         * Handle player input
         */
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::KeyReleased && !paused) {
+                // allow input
+                acceptInput = true;
+
+                // Hide axe
+                spriteAxe.setPosition(2000, spriteAxe.getPosition().y);
+            }
+        }
+
         if (Keyboard::isKeyPressed(Keyboard::Escape)) {
             window.close();
         }
@@ -124,6 +192,53 @@ int main()
             // Reset Time and Score
             score = 0;
             timeRemaining = 6;
+            
+            // Create Branches 
+            for (int i = 0; i < NUM_BRANCHES; i++) {
+                branchPositions[i] = side::NONE;
+            }
+
+            // Hide RIP
+            spriteRIP.setPosition(675, 2000);
+
+            spritePlayer.setPosition(580, 720);
+            acceptInput = true;
+        }
+        if (acceptInput) {
+            if (Keyboard::isKeyPressed(Keyboard::Right)) {
+                playerSide = side::RIGHT;
+                score++;
+
+                timeRemaining += (2 / score) + .15;
+                spriteAxe.setPosition(AXE_POSITION_RIGHT, spriteAxe.getPosition().y);
+
+                spritePlayer.setPosition(1200, 720);
+
+                updateBranches(score);
+
+                spriteLog.setPosition(810, 720);
+                logSpeedX = -5000;
+                logActive = true;
+
+                acceptInput = false;
+            }
+            if (Keyboard::isKeyPressed(Keyboard::Left)) {
+                playerSide = side::LEFT;
+                score++;
+
+                timeRemaining += (2 / score) + .15;
+                spriteAxe.setPosition(AXE_POSITION_LEFT, spriteAxe.getPosition().y);
+
+                spritePlayer.setPosition(580, 720);
+
+                updateBranches(score);
+
+                spriteLog.setPosition(810, 720);
+                logSpeedX = 5000;
+                logActive = true;
+
+                acceptInput = false;
+            }
         }
 
         /*
@@ -218,6 +333,22 @@ int main()
             std::stringstream ss;
             ss << "Score = " << score;
             scoreText.setString(ss.str());
+
+            // Update branches 
+            for (int i = 0; i < NUM_BRANCHES; i++) {
+                float height = i * 150;
+                if (branchPositions[i] == side::LEFT) {
+                    branches[i].setPosition(610, height);
+                    branches[i].setRotation(180);
+                }
+                else if (branchPositions[i] == side::RIGHT) {
+                    branches[i].setPosition(1330, height);
+                    branches[i].setRotation(0);
+                }
+                else {
+                    branches[i].setPosition(3000, height);
+                }
+            }
         }
        
         /*
@@ -231,7 +362,14 @@ int main()
         window.draw(spriteCloud1);
         window.draw(spriteCloud2);
         window.draw(spriteCloud3);
+        for (int i = 0; i < NUM_BRANCHES; i++) {
+            window.draw(branches[i]);
+        }
         window.draw(spriteTree);
+        window.draw(spritePlayer);
+        window.draw(spriteAxe);
+        window.draw(spriteLog);
+        window.draw(spriteRIP);
         window.draw(spriteBee);
 
         // Draw Text
@@ -249,4 +387,26 @@ int main()
     }
 
     return 0;
+}
+
+void updateBranches(int seed)
+{
+    for (int j = NUM_BRANCHES - 1; j > 0; j--) {
+        branchPositions[j] = branchPositions[j - 1];
+    }
+    // Spawn New Branch
+    srand((int)time(0) + seed);
+    int r = (rand() % 5);
+    switch (r)
+    {
+    case 0:
+        branchPositions[0] = side::LEFT;
+        break;
+    case 1:
+        branchPositions[0] = side::RIGHT;
+        break;
+    default:
+        branchPositions[0] = side::NONE;
+        break;
+    }
 }
