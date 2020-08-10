@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 using namespace sf;
 
@@ -168,6 +169,22 @@ int main()
     // control player input
     bool acceptInput = false;
 
+    // Load Sound FX
+    SoundBuffer chopBuffer;
+    chopBuffer.loadFromFile("sound/chop.wav");
+    Sound chop;
+    chop.setBuffer(chopBuffer);
+
+    SoundBuffer deathBuffer;
+    deathBuffer.loadFromFile("sounds/death.wav");
+    Sound death;
+    death.setBuffer(deathBuffer);
+
+    SoundBuffer ootBuffer;
+    ootBuffer.loadFromFile("sounds/out_of_time.wav");
+    Sound outOfTime;
+    outOfTime.setBuffer(ootBuffer);
+
     while (window.isOpen()) {
         /*
         * Handle player input
@@ -221,6 +238,8 @@ int main()
                 logActive = true;
 
                 acceptInput = false;
+
+                chop.play();
             }
             if (Keyboard::isKeyPressed(Keyboard::Left)) {
                 playerSide = side::LEFT;
@@ -238,6 +257,8 @@ int main()
                 logActive = true;
 
                 acceptInput = false;
+
+                chop.play();
             }
         }
 
@@ -260,6 +281,8 @@ int main()
                 FloatRect textRect = messageText.getLocalBounds();
                 messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
                 messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+
+                outOfTime.play();
             }
 
             // Update Bee
@@ -348,6 +371,34 @@ int main()
                 else {
                     branches[i].setPosition(3000, height);
                 }
+            }
+
+            // Handle Flying log
+            if (logActive) {
+                spriteLog.setPosition(spriteLog.getPosition().x + (logSpeedX * dt.asSeconds()), spriteLog.getPosition().y + (logSpeedY * dt.asSeconds()));
+
+                if (spriteLog.getPosition().x < -100 || spriteLog.getPosition().x > 2000) {
+                    logActive = false;
+                    spriteLog.setPosition(810, 720);
+                }
+            }
+
+            // Handle player death 
+            if (branchPositions[5] == playerSide) {
+                paused = true;
+                acceptInput = false;
+
+                // Draw GraveStone
+                spriteRIP.setPosition(525, 760);
+                spritePlayer.setPosition(2000, 660);
+
+                // Change Message Text
+                messageText.setString("SQUISHED!");
+                FloatRect textRect = messageText.getLocalBounds();
+                messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+                messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+
+                death.play();
             }
         }
        
