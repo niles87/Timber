@@ -11,6 +11,8 @@ const int NUM_BRANCHES = 6;
 Sprite branches[NUM_BRANCHES];
 enum class side {LEFT, RIGHT, NONE};
 side branchPositions[NUM_BRANCHES];
+const int CLOUDS = 3;
+Sprite cloud[CLOUDS];
 
 int main()
 {
@@ -54,21 +56,15 @@ int main()
     // Create Cloud Sprite
     Texture textureCloud;
     textureCloud.loadFromFile("graphics/cloud.png");
-    Sprite spriteCloud1;
-    Sprite spriteCloud2;
-    Sprite spriteCloud3;
-    spriteCloud1.setTexture(textureCloud);
-    spriteCloud2.setTexture(textureCloud);
-    spriteCloud3.setTexture(textureCloud);
-    spriteCloud1.setPosition(0, 0);
-    spriteCloud2.setPosition(0, 250);
-    spriteCloud3.setPosition(0, 500);
-    bool cloud1Active = false;
-    bool cloud2Active = false;
-    bool cloud3Active = false;
-    float cloud1Speed = 0.0f;
-    float cloud2Speed = 0.0f;
-    float cloud3Speed = 0.0f;
+
+    int cloudSpeed[CLOUDS];
+    bool cloudActive[CLOUDS];
+    for (int i = 0; i < CLOUDS; i++) {
+        cloud[i].setTexture(textureCloud);
+        cloud[i].setPosition(0, 200 * i);
+        cloudActive[i] = false;
+        cloudSpeed[i] = 0;
+    }
 
     // Variables to control time!
     Clock clock;
@@ -302,56 +298,25 @@ int main()
                 }
             }
            
-            // Update First Cloud
-            if (!cloud1Active) {
-                srand((int)time(0) * 10);
-                cloud1Speed = (rand() % 100) + 75;
+            // Update Clouds
+            for (int i = 0; i < CLOUDS; i++) {
+                if (!cloudActive[i]){
+                    srand((int)time(0)* (10 * i + 10));
+                    cloudSpeed[i] = (rand() % 100);
 
-                srand((int)time(0) * 10);
-                float height = (rand() % 75);
-                spriteCloud1.setPosition(-200, height);
-                cloud1Active = true;
-            }
-            else {
-                spriteCloud1.setPosition(spriteCloud1.getPosition().x + (cloud1Speed * dt.asSeconds()), spriteCloud1.getPosition().y);
-                if (spriteCloud1.getPosition().x > 2000) {
-                    cloud1Active = false;
+                    srand((int)time(0) * 10);
+                    float height = (rand() % (100 * i + 100));
+                    cloud[i].setPosition(-200, height);
+                    cloudActive[i] = true;
+                }
+                else {
+                    cloud[i].setPosition(cloud[i].getPosition().x + (cloudSpeed[i] * dt.asSeconds()), cloud[i].getPosition().y);
+                    if (cloud[i].getPosition().x > 2000) {
+                        cloudActive[i] = false;
+                    }
                 }
             }
-
-            // Update Second Cloud
-            if (!cloud2Active) {
-                srand((int)time(0) * 10);
-                cloud2Speed = (rand() % 100) + 100;
-
-                srand((int)time(0) * 10);
-                float height = (rand() % 250);
-                spriteCloud2.setPosition(-200, height);
-                cloud2Active = true;
-            }
-            else {
-                spriteCloud2.setPosition(spriteCloud2.getPosition().x + (cloud2Speed * dt.asSeconds()), spriteCloud2.getPosition().y);
-                if (spriteCloud2.getPosition().x > 2000) {
-                    cloud2Active = false;
-                }
-            }
-
-            // Update Third Cloud
-            if (!cloud3Active) {
-                srand((int)time(0) * 10);
-                cloud3Speed = (rand() % 100) + 125;
-
-                srand((int)time(0) * 10);
-                float height = (rand() % 350);
-                spriteCloud3.setPosition(-200, height);
-                cloud3Active = true;
-            }
-            else {
-                spriteCloud3.setPosition(spriteCloud3.getPosition().x + (cloud3Speed * dt.asSeconds()), spriteCloud3.getPosition().y);
-                if (spriteCloud3.getPosition().x > 2000) {
-                    cloud3Active = false;
-                }
-            }
+            
             // Update score text
             std::stringstream ss;
             ss << "Score = " << score;
@@ -410,9 +375,9 @@ int main()
 
         // Draw game scene
         window.draw(spriteBackground);
-        window.draw(spriteCloud1);
-        window.draw(spriteCloud2);
-        window.draw(spriteCloud3);
+        for (int i = 0; i < CLOUDS; i++) {
+            window.draw(cloud[i]);
+        }
         for (int i = 0; i < NUM_BRANCHES; i++) {
             window.draw(branches[i]);
         }
